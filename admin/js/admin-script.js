@@ -25,12 +25,14 @@
 
         // Filter handlers
         $('#chklinkout-filter-type').on('change', function() {
+            if (!currentScanId) return;
             currentFilters.post_type = $(this).val();
             currentPage = 1;
             loadResults();
         });
 
         $('#chklinkout-filter-broken').on('change', function() {
+            if (!currentScanId) return;
             const val = $(this).val();
             currentFilters.is_broken = val === '' ? null : val;
             currentPage = 1;
@@ -40,6 +42,7 @@
         // Search with debounce
         let searchTimeout;
         $('#chklinkout-search').on('input', function() {
+            if (!currentScanId) return;
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(function() {
                 currentFilters.search = $('#chklinkout-search').val();
@@ -244,7 +247,14 @@
                     currentScanId = response.data.scan_id;
                     loadResults();
                     $('#chklinkout-check-broken-btn').show();
+                } else {
+                    // No cached scan available - show welcome message
+                    displayWelcomeMessage();
                 }
+            },
+            error: function() {
+                // Silent fail on page load
+                displayWelcomeMessage();
             }
         });
     }
@@ -253,7 +263,10 @@
      * Load results from database
      */
     function loadResults() {
-        if (!currentScanId) return;
+        if (!currentScanId) {
+            console.log('ChkLinkOut: No scan ID available');
+            return;
+        }
 
         $.ajax({
             url: chklinkoutAjax.ajax_url,
@@ -274,11 +287,12 @@
                 if (response.success) {
                     displayResults(response.data);
                 } else {
-                    showError(response.data.message);
+                    showError(response.data.message || 'Có lỗi xảy ra khi tải dữ liệu');
                 }
             },
-            error: function() {
-                showError(chklinkoutAjax.i18n.error);
+            error: function(xhr, status, error) {
+                console.error('ChkLinkOut Error:', error);
+                showError('Không thể tải kết quả. Vui lòng thử lại.');
             }
         });
     }
@@ -516,6 +530,19 @@
                 <span class="dashicons dashicons-yes-alt"></span>
                 <h3>Không tìm thấy External Links</h3>
                 <p>Website của bạn không chứa external links nào hoặc không có kết quả phù hợp với bộ lọc.</p>
+            </div>
+        `).show();
+    }
+
+    /**
+     * Display welcome message
+     */
+    function displayWelcomeMessage() {
+        $('#chklinkout-results').html(`
+            <div class="chklinkout-empty">
+                <span class="dashicons dashicons-admin-links" style="color: #2271b1;"></span>
+                <h3>Chào mừng đến với ChkLinkOut!</h3>
+                <p>Click nút <strong>"Bắt đầu quét mới"</strong> để scan external links trong website của bạn.</p>
             </div>
         `).show();
     }
