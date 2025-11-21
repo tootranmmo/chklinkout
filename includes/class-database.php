@@ -99,7 +99,14 @@ class ChkLinkOut_Database {
         global $wpdb;
         $table = $wpdb->prefix . self::TABLE_SCANS;
 
-        $wpdb->insert(
+        // Check if table exists
+        $table_exists = $wpdb->get_var( "SHOW TABLES LIKE '$table'" );
+        if ( ! $table_exists ) {
+            // Try to create tables
+            self::create_tables();
+        }
+
+        $result = $wpdb->insert(
             $table,
             array(
                 'status' => 'running',
@@ -108,6 +115,12 @@ class ChkLinkOut_Database {
             ),
             array( '%s', '%d', '%s' )
         );
+
+        if ( $result === false ) {
+            // Log error for debugging
+            error_log( 'ChkLinkOut: Failed to create scan. DB Error: ' . $wpdb->last_error );
+            return 0;
+        }
 
         return $wpdb->insert_id;
     }

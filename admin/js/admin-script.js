@@ -78,8 +78,10 @@
             success: function(response) {
                 if (response.success) {
                     currentScanId = response.data.scan_id;
+                    console.log('ChkLinkOut: Scan started with ID:', currentScanId);
                     processBatches(response.data);
                 } else {
+                    console.error('ChkLinkOut: Start scan failed:', response.data.message);
                     showError(response.data.message);
                     $('#chklinkout-scan-btn').prop('disabled', false);
                     hideProgress();
@@ -128,6 +130,8 @@
                             completeScan();
                         }
                     } else {
+                        console.error('ChkLinkOut: Batch scan failed:', response.data.message);
+                        console.error('ChkLinkOut: Current scan_id:', currentScanId);
                         showError(response.data.message);
                         $('#chklinkout-scan-btn').prop('disabled', false);
                         hideProgress();

@@ -230,6 +230,11 @@ class ChkLinkOut {
         $crawler = new ChkLinkOut_External_Link_Crawler();
         $result = $crawler->start_scan();
 
+        // Check if scan was created successfully
+        if ( empty( $result['scan_id'] ) || $result['scan_id'] == 0 ) {
+            wp_send_json_error( array( 'message' => __( 'Không thể tạo scan. Vui lòng deactivate và activate lại plugin để tạo database tables.', 'chklinkout' ) ) );
+        }
+
         wp_send_json_success( $result );
     }
 
@@ -247,7 +252,8 @@ class ChkLinkOut {
         $offset = isset( $_POST['offset'] ) ? intval( $_POST['offset'] ) : 0;
 
         if ( ! $scan_id ) {
-            wp_send_json_error( array( 'message' => __( 'Invalid scan ID', 'chklinkout' ) ) );
+            error_log( 'ChkLinkOut: Invalid scan ID in scan_batch. Received: ' . var_export( $_POST, true ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid scan ID. Scan không được tạo thành công. Vui lòng thử lại hoặc deactivate/activate plugin.', 'chklinkout' ) ) );
         }
 
         $crawler = new ChkLinkOut_External_Link_Crawler();
